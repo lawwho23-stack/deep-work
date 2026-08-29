@@ -13,7 +13,22 @@
 # shell, which then kills the child outright. A shell trap cannot be ignored by the
 # thing it is killing, which is exactly the property an escape hatch needs.
 
-APP_DIR="/Users/pyaesoneaung/Claude_Code_Mastery/deep-work"
+# WHY THIS RESOLVES THE SYMLINK INSTEAD OF USING `dirname "$0"`:
+# `deep` is reached through ~/.local/bin/deep, which is a symlink into this repo.
+# `$0` is therefore the LINK, not this file — `dirname "$0"` would give ~/.local/bin
+# and the app directory would be wrong. The loop below follows the link chain to the
+# real script, then takes its parent's parent. Relative link targets are resolved
+# against the directory of the link that named them, which is the only correct rule.
+
+SELF="$0"
+while [ -L "$SELF" ]; do
+  LINK=$(readlink "$SELF")
+  case "$LINK" in
+    /*) SELF="$LINK" ;;
+     *) SELF="$(dirname "$SELF")/$LINK" ;;
+  esac
+done
+APP_DIR="$(cd "$(dirname "$SELF")/.." && pwd)"
 BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
 MATCH="deep-work/node_modules/electron"
 

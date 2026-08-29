@@ -15,9 +15,9 @@ deep focus
 From any directory, any terminal. Press **Start**, then minimise the window and work — the break
 arrives by itself.
 
-`deep` is a small script in `bin/deep`, linked into `~/.local/bin` (already on your PATH). It
-hardcodes this folder's location, so if you move `deep-work/` somewhere else, edit `APP_DIR` at the
-top of `bin/deep`.
+`deep` is a small script in `bin/deep`, linked into `~/.local/bin` (already on your PATH). It works
+out this folder's location by following its own symlink back to the real script, so you can move
+`deep-work/` anywhere and `deep focus` keeps working — there is nothing to edit.
 
 First time only, or after pulling changes: `cd deep-work && npm install`.
 
