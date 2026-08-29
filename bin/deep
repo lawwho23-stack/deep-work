@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# `deep focus` — start the Deep Work timer.
+#
+# WHY THIS RUNS ELECTRON DIRECTLY, NOT `npm start`:
+# `npm start` stacks two extra processes in front of the app — npm, then a Node
+# launcher script. Ctrl+C goes to those, and the real app can survive as an orphan
+# that keeps blacking the screen every 90 minutes from a process you cannot see.
+#
+# WHY THE SHELL KILLS THE APP INSTEAD OF THE APP CATCHING Ctrl+C:
+# Electron swallows SIGINT/SIGTERM/SIGHUP in the main process — measured: the app
+# kept running with no handler firing at all. So the signal is trapped HERE, in the
+# shell, which then kills the child outright. A shell trap cannot be ignored by the
+# thing it is killing, which is exactly the property an escape hatch needs.
+
+APP_DIR="/Users/pyaesoneaung/Claude_Code_Mastery/deep-work"
+BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+MATCH="deep-work/node_modules/electron"
+
+usage() {
+  echo "deep focus    start the timer — 90 min work, 5 min enforced break, looping"
+  echo "deep stop     kill any running instance (including one you cannot see)"
+  echo ""
+  echo "While it runs: Ctrl+C quits. Cmd+Ctrl+Option+Q quits from anywhere."
+}
+
+case "$1" in
+  focus)
+    if [ ! -x "$BIN" ]; then
+      echo "Electron is not installed yet. Run:  cd $APP_DIR && npm install" >&2
+      exit 1
+    fi
+    if pgrep -f "$MATCH" >/dev/null 2>&1; then
+      echo "Deep Work is already running. Use 'deep stop' first." >&2
+      exit 1
+    fi
+    echo "Deep Work — 90 min focus, then a 5 min break the screen enforces."
+    echo "Ctrl+C to quit."
+    "$BIN" "$APP_DIR" &
+    CHILD=$!
+    trap 'kill $CHILD 2>/dev/null; sleep 1; kill -9 $CHILD 2>/dev/null; echo ""; echo "Stopped."; exit 0' INT TERM HUP
+    wait $CHILD
+    ;;
+  stop)
+    if pgrep -f "$MATCH" >/dev/null 2>&1; then
+      pkill -f "$MATCH"
+      sleep 1
+      pkill -9 -f "$MATCH" 2>/dev/null
+      echo "Stopped."
+    else
+      echo "Not running."
+    fi
+    ;;
+  ""|-h|--help|help) usage ;;
+  *) echo "Unknown command: $1" >&2; echo ""; usage; exit 1 ;;
+esac

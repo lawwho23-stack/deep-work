@@ -1,0 +1,97 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Break</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+    cursor: none;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  #label {
+    font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #4a4a4a;
+    margin-bottom: 2.5rem;
+  }
+  #clock {
+    font-size: clamp(6rem, 18vw, 15rem);
+    font-weight: 200;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: #f2f2f2;
+  }
+  #sub {
+    font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+    font-size: 14px;
+    color: #3a3a3a;
+    margin-top: 2.5rem;
+    letter-spacing: 0.02em;
+  }
+  #hint {
+    position: fixed;
+    bottom: 26px;
+    font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: #1f1f1f;
+  }
+  /* Feedback while Escape is held. Cosmetic only — the quit itself is decided in
+     the main process, so this bar going missing changes nothing. */
+  #escbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: #6b6b6b;
+    transition: width linear;
+  }
+</style>
+
+<div id="label">Break</div>
+<div id="clock">00:00</div>
+<div id="sub">Step away from the screen.</div>
+<div id="hint">HOLD ESC 5s — EMERGENCY EXIT</div>
+<div id="escbar"></div>
+
+<script>
+  const clock = document.getElementById('clock')
+  const sub = document.getElementById('sub')
+  const escbar = document.getElementById('escbar')
+
+  const mmss = (ms) => {
+    const t = Math.ceil(ms / 1000)
+    return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0')
+  }
+
+  window.deepwork.onTick(({ phase, remaining }) => {
+    if (phase !== 'BREAK') return
+    clock.textContent = mmss(remaining)
+    if (remaining <= 10000) sub.textContent = 'Back to work in a moment.'
+  })
+
+  window.deepwork.onEsc(({ holding, holdMs }) => {
+    if (holding) {
+      escbar.style.transition = 'width ' + holdMs + 'ms linear'
+      escbar.style.width = '100%'
+    } else {
+      escbar.style.transition = 'width 180ms ease-out'
+      escbar.style.width = '0%'
+    }
+  })
+</script>

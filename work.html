@@ -1,0 +1,120 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Deep Work</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: #0b0b0d;
+    color: #e8e8ea;
+    font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.75rem;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+  }
+  #label {
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #6d6d78;
+  }
+  #clock {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 4.5rem;
+    font-weight: 200;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+  }
+  #clock.idle { color: #3f3f47; }
+  #bar {
+    width: 260px;
+    height: 3px;
+    border-radius: 3px;
+    background: #1e1e24;
+    overflow: hidden;
+  }
+  #fill {
+    height: 100%;
+    width: 0%;
+    background: #e8e8ea;
+    border-radius: 3px;
+  }
+  button {
+    -webkit-app-region: no-drag;
+    font: inherit;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    padding: 0.6rem 2.2rem;
+    border-radius: 999px;
+    border: 1px solid #2a2a32;
+    background: #e8e8ea;
+    color: #0b0b0d;
+    cursor: pointer;
+  }
+  button.ghost { background: transparent; color: #8b8b96; }
+  button:hover { opacity: 0.85; }
+  #note {
+    font-size: 11px;
+    color: #4a4a54;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 300px;
+  }
+</style>
+
+<div id="label">Ready</div>
+<div id="clock" class="idle">90:00</div>
+<div id="bar"><div id="fill"></div></div>
+<button id="action">Start</button>
+<div id="note"></div>
+
+<script>
+  const label = document.getElementById('label')
+  const clock = document.getElementById('clock')
+  const fill = document.getElementById('fill')
+  const action = document.getElementById('action')
+  const note = document.getElementById('note')
+
+  let phase = 'IDLE'
+
+  const mmss = (ms) => {
+    const t = Math.ceil(ms / 1000)
+    return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0')
+  }
+
+  action.addEventListener('click', () => {
+    if (phase === 'IDLE') window.deepwork.start()
+    else window.deepwork.stop()
+  })
+
+  window.deepwork.onTick((s) => {
+    phase = s.phase
+    if (s.phase === 'IDLE') {
+      label.textContent = 'Ready'
+      clock.textContent = mmss(s.workMs)
+      clock.classList.add('idle')
+      fill.style.width = '0%'
+      action.textContent = 'Start'
+      action.classList.remove('ghost')
+      note.textContent =
+        mmss(s.workMs) + ' focus, then ' + mmss(s.breakMs) + ' where the screen goes black.'
+      return
+    }
+    clock.classList.remove('idle')
+    label.textContent = s.phase === 'WORK' ? 'Focus' : 'Break'
+    clock.textContent = mmss(s.remaining)
+    fill.style.width = (100 * (1 - s.remaining / s.total)).toFixed(2) + '%'
+    action.textContent = 'Stop'
+    action.classList.add('ghost')
+    note.textContent =
+      s.phase === 'WORK'
+        ? 'Break starts on its own. Minimise this window and work.'
+        : 'Break in progress.'
+  })
+</script>

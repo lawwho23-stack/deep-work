@@ -1,0 +1,13 @@
+{
+  "name": "deep-work",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local deep-focus timer: 90 minutes of work, then a 5-minute break the screen enforces.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^44.0.0"
+  }
+}
