@@ -6,20 +6,41 @@ over. Then the next 90-minute block starts on its own.
 
 No database, no accounts, no network, no settings file. It remembers nothing between runs.
 
+**macOS only.** The enforced break screen is built on macOS window levels and the macOS app menu;
+there is no equivalent elsewhere, so `deep focus` refuses to start on other systems rather than
+half-working.
+
+## Install
+
+```bash
+git clone https://github.com/lawwho23-stack/deep-work.git
+cd deep-work
+npm install    # downloads Electron — a few hundred MB, once
+npm link       # puts `deep` on your PATH
+```
+
+That is the whole install. `deep focus` now works from any directory, in any terminal.
+
+`npm link` makes a symlink from your global npm folder to this clone — **nothing is copied**. The
+app runs from wherever you cloned it, under whatever name you cloned it as, and you can move or
+rename the folder afterwards and it keeps working: `bin/deep` follows that symlink back to itself
+to find the app.
+
+Prefer not to touch your PATH? Skip `npm link` and use `./bin/deep focus` from inside the folder,
+or `npx deep focus`.
+
+**To remove it:** `npm uninstall -g deep-work`, then delete the folder. Nothing is left behind —
+the app writes no config, no cache and no data anywhere.
+
+After pulling new changes, run `npm install` again in case a dependency moved.
+
 ## Run it
 
 ```bash
 deep focus
 ```
 
-From any directory, any terminal. Press **Start**, then minimise the window and work — the break
-arrives by itself.
-
-`deep` is a small script in `bin/deep`, linked into `~/.local/bin` (already on your PATH). It works
-out this folder's location by following its own symlink back to the real script, so you can move
-`deep-work/` anywhere and `deep focus` keeps working — there is nothing to edit.
-
-First time only, or after pulling changes: `cd deep-work && npm install`.
+Press **Start**, then minimise the window and work — the break arrives by itself.
 
 ## Stopping it
 

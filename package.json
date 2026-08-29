@@ -4,6 +4,12 @@
   "private": true,
   "description": "Local deep-focus timer: 90 minutes of work, then a 5-minute break the screen enforces.",
   "main": "main.js",
+  "bin": {
+    "deep": "bin/deep"
+  },
+  "os": [
+    "darwin"
+  ],
   "scripts": {
     "start": "electron ."
   },

@@ -30,7 +30,16 @@ while [ -L "$SELF" ]; do
 done
 APP_DIR="$(cd "$(dirname "$SELF")/.." && pwd)"
 BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
-MATCH="deep-work/node_modules/electron"
+
+# WHY MATCH IS BUILT FROM APP_DIR AND NOT HARDCODED:
+# This is the pattern `pgrep`/`pkill` use to find a running instance, matched against
+# the full command line (`$BIN $APP_DIR`). It used to be the literal string
+# "deep-work/node_modules/electron", which silently broke for anyone who cloned the
+# repo into a folder with a different name: `deep stop` said "Not running" while the
+# app kept blacking the screen, and the already-running guard never fired.
+# Deriving it from APP_DIR also makes it precise — `deep stop` in one clone cannot
+# kill an instance started from a different clone.
+MATCH="$APP_DIR/node_modules/electron"
 
 usage() {
   echo "deep focus    start the timer — 90 min work, 5 min enforced break, looping"
@@ -41,8 +50,16 @@ usage() {
 
 case "$1" in
   focus)
+    # The break screen relies on the macOS `screen-saver` window level and on the
+    # macOS app menu to disable Cmd+Q. Neither exists elsewhere, so refuse early
+    # rather than half-work.
+    if [ "$(uname -s)" != "Darwin" ]; then
+      echo "Deep Work is macOS only — the enforced break screen is built on macOS window levels." >&2
+      exit 1
+    fi
     if [ ! -x "$BIN" ]; then
-      echo "Electron is not installed yet. Run:  cd $APP_DIR && npm install" >&2
+      echo "Electron is not installed yet. Run:" >&2
+      echo "  cd \"$APP_DIR\" && npm install" >&2
       exit 1
     fi
     if pgrep -f "$MATCH" >/dev/null 2>&1; then
