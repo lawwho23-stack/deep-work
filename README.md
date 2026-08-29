@@ -34,6 +34,11 @@ through the symlinked command and through the symlinked directory npm creates.
 If `npm link` says `File exists: .../bin/deep`, you already have something called `deep` on your
 PATH. Remove that file first, then link again.
 
+If you install with `npm install --ignore-scripts` — a reasonable habit, and the reason Electron
+dropped its own postinstall — that `postinstall` is skipped and you get **no Electron binary**.
+Verified: `deep focus` then reports Electron is not installed. Recover with `npx install-electron`
+in this folder.
+
 Prefer not to touch your PATH? Skip `npm link` and run `./bin/deep focus` from inside the folder.
 (`npx deep focus` does **not** work — npx would go looking for an unrelated package named `deep` on
 the npm registry.)
