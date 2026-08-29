@@ -21,18 +21,28 @@ npm link       # puts `deep` on your PATH
 
 That is the whole install. `deep focus` now works from any directory, in any terminal.
 
-`npm link` makes a symlink from your global npm folder to this clone — **nothing is copied**. The
-app runs from wherever you cloned it, under whatever name you cloned it as, and you can move or
-rename the folder afterwards and it keeps working: `bin/deep` follows that symlink back to itself
-to find the app.
+**What `npm install` does here.** Electron 44 no longer downloads its own binary on install, so
+this project runs `install-electron` as a `postinstall` step to fetch it. That is the few-hundred-MB
+download, and it is the only thing this project ever pulls from the network. Without it you would
+get a working `deep` command and no app behind it.
 
-Prefer not to touch your PATH? Skip `npm link` and use `./bin/deep focus` from inside the folder,
-or `npx deep focus`.
+**What `npm link` does.** It symlinks your global npm folder to this clone — **nothing is copied**.
+The app runs from wherever you cloned it, under whatever name you cloned it as, and you can move or
+rename the folder afterwards and it keeps working: `bin/deep` resolves its own real location, both
+through the symlinked command and through the symlinked directory npm creates.
+
+If `npm link` says `File exists: .../bin/deep`, you already have something called `deep` on your
+PATH. Remove that file first, then link again.
+
+Prefer not to touch your PATH? Skip `npm link` and run `./bin/deep focus` from inside the folder.
+(`npx deep focus` does **not** work — npx would go looking for an unrelated package named `deep` on
+the npm registry.)
 
 **To remove it:** `npm uninstall -g deep-work`, then delete the folder. Nothing is left behind —
 the app writes no config, no cache and no data anywhere.
 
-After pulling new changes, run `npm install` again in case a dependency moved.
+After pulling new changes, run `npm install` again — a dependency may have moved, and it re-checks
+the Electron binary.
 
 ## Run it
 

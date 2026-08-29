@@ -28,7 +28,14 @@ while [ -L "$SELF" ]; do
      *) SELF="$(dirname "$SELF")/$LINK" ;;
   esac
 done
-APP_DIR="$(cd "$(dirname "$SELF")/.." && pwd)"
+# `pwd -P`, not `pwd`: resolve symlinked DIRECTORIES too, not just the symlinked
+# file above. `npm link` puts the package behind a directory symlink
+# (~/.local/lib/node_modules/deep-work -> the clone), so the loop above stops at a
+# real file sitting inside a linked directory. Without -P, `deep focus` (via the
+# link) and `./bin/deep stop` (inside the folder) would compute two different
+# APP_DIRs, hence two different MATCH patterns — and `deep stop` would report
+# "Not running" while the app was still blacking the screen.
+APP_DIR="$(cd "$(dirname "$SELF")/.." && pwd -P)"
 BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
 
 # WHY MATCH IS BUILT FROM APP_DIR AND NOT HARDCODED:

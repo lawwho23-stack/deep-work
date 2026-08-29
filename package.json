@@ -11,7 +11,8 @@
     "darwin"
   ],
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "postinstall": "install-electron"
   },
   "devDependencies": {
     "electron": "^44.0.0"
