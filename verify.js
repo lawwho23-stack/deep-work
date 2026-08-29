@@ -10,11 +10,15 @@
  * synthetic key source, so everything downstream of the keypress is genuinely
  * exercised. The physical 5-second hold is the only part left to a human.
  *
+ * `sendInputEvent({ keyCode: ' ' })` arrives at the handler as
+ * `{ key: ' ', code: 'Space' }` — measured, both fields are populated — so this
+ * harness exercises exactly the same match a real spacebar takes.
+ *
  * Usage:
  *   DEEPWORK_VERIFY=shot:/tmp/x.png        save the break screen's own render
  *   DEEPWORK_VERIFY=work-shot:/tmp/x.png   save the work window's own render
- *   DEEPWORK_VERIFY=esc-hold          press-and-hold Escape, never release  -> must quit
- *   DEEPWORK_VERIFY=esc-cancel        press Escape, release early           -> must NOT quit
+ *   DEEPWORK_VERIFY=space-hold        press-and-hold Space, never release   -> must quit
+ *   DEEPWORK_VERIFY=space-cancel      press Space, release early            -> must NOT quit
  *   DEEPWORK_VERIFY=crash             kill the overlay's renderer           -> must quit
  */
 
@@ -38,7 +42,7 @@ function onFirstOverlayShown(win, log) {
   const spec = process.env.DEEPWORK_VERIFY || ''
   const [name, arg] = spec.split(':')
   const wc = win.webContents
-  const esc = (type) => wc.sendInputEvent({ type, keyCode: 'Escape' })
+  const space = (type) => wc.sendInputEvent({ type, keyCode: ' ' })
 
   setTimeout(() => {
     if (name === 'shot' && arg) {
@@ -48,13 +52,13 @@ function onFirstOverlayShown(win, log) {
           log('VERIFY shot written to', arg)
         })
         .catch((e) => log('VERIFY shot failed:', e.message))
-    } else if (name === 'esc-hold') {
-      log('VERIFY pressing Escape and holding')
-      esc('keyDown')
-    } else if (name === 'esc-cancel') {
-      log('VERIFY pressing Escape, releasing after 300ms')
-      esc('keyDown')
-      setTimeout(() => esc('keyUp'), 300)
+    } else if (name === 'space-hold') {
+      log('VERIFY pressing Space and holding')
+      space('keyDown')
+    } else if (name === 'space-cancel') {
+      log('VERIFY pressing Space, releasing after 300ms')
+      space('keyDown')
+      setTimeout(() => space('keyUp'), 300)
     } else if (name === 'crash') {
       log('VERIFY crashing the overlay renderer')
       wc.forcefullyCrashRenderer()

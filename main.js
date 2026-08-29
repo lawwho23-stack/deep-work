@@ -22,7 +22,7 @@ const path = require('node:path')
 // the test never actually gets run.
 const WORK_MS = Number(process.env.DEEPWORK_WORK_MS) || 90 * 60 * 1000
 const BREAK_MS = Number(process.env.DEEPWORK_BREAK_MS) || 5 * 60 * 1000
-const ESC_HOLD_MS = Number(process.env.DEEPWORK_ESC_HOLD_MS) || 5 * 1000
+const HOLD_MS = Number(process.env.DEEPWORK_HOLD_MS) || 5 * 1000
 const KILL_ACCELERATOR = 'Command+Control+Alt+Q'
 const AUTOSTART = process.env.DEEPWORK_AUTOSTART === '1' // test seam: skip the Start click
 const VERIFY = process.env.DEEPWORK_VERIFY || '' // test seam, see verify.js
@@ -35,8 +35,8 @@ let target = 0 // absolute epoch ms, never an accumulated counter
 let workWin = null
 let overlays = []
 let ticker = null
-let escTimer = null
-let escStartedAt = 0
+let holdTimer = null
+let holdStartedAt = 0
 let exiting = false // set by a real exit path, so teardown only runs once
 
 const log = (...a) => console.log('[deep-work]', ...a)
@@ -59,7 +59,7 @@ function broadcast() {
     total: phase === 'BREAK' ? BREAK_MS : WORK_MS,
     workMs: WORK_MS,
     breakMs: BREAK_MS,
-    escHoldMs: ESC_HOLD_MS,
+    holdMs: HOLD_MS,
   }
   for (const w of [workWin, ...overlays]) {
     if (w && !w.isDestroyed()) w.webContents.send('deepwork:tick', payload)
@@ -172,7 +172,7 @@ function openOverlays() {
 }
 
 function closeOverlays() {
-  clearEscHold()
+  clearHold()
   for (const w of overlays) {
     if (w && !w.isDestroyed()) {
       w.setClosable(true)
@@ -186,31 +186,40 @@ function closeOverlays() {
 // Three layers, because an app that covers the whole screen and cannot be quit is
 // a genuine foot-gun.
 
-function clearEscHold() {
-  if (escTimer) clearTimeout(escTimer)
-  escTimer = null
-  escStartedAt = 0
+function clearHold() {
+  if (holdTimer) clearTimeout(holdTimer)
+  holdTimer = null
+  holdStartedAt = 0
 }
 
 /**
- * Layer 1 — hold Escape.
+ * Layer 1 — hold Space.
  * `before-input-event` fires in the MAIN process, so a dead renderer does not take
  * the escape hatch down with it. A keydown listener inside the page would be gone
  * exactly when it is needed.
+ *
+ * WHY `input.code` FIRST, THEN `input.key`: `code` is the physical key and is
+ * unaffected by keyboard layout or modifiers, which is what we actually mean by
+ * "the spacebar". `key` is the character produced, ' ' for space. Both are checked
+ * because a synthetic event from verify.js carries only one of them.
  */
+function isSpace(input) {
+  return input.code === 'Space' || input.key === ' '
+}
+
 function wireEmergencyExit(win) {
   const wc = win.webContents
 
   wc.on('before-input-event', (_event, input) => {
-    if (input.key !== 'Escape') return
+    if (!isSpace(input)) return
     if (input.type === 'keyDown') {
-      if (escTimer) return // already counting; ignore auto-repeat
-      escStartedAt = Date.now()
-      escTimer = setTimeout(() => forceQuit('escape held'), ESC_HOLD_MS)
-      sendEsc(true)
+      if (holdTimer) return // already counting; ignore auto-repeat
+      holdStartedAt = Date.now()
+      holdTimer = setTimeout(() => forceQuit('space held'), HOLD_MS)
+      sendHold(true)
     } else if (input.type === 'keyUp') {
-      clearEscHold()
-      sendEsc(false)
+      clearHold()
+      sendHold(false)
     }
   })
 
@@ -220,16 +229,16 @@ function wireEmergencyExit(win) {
   win.on('unresponsive', () => forceQuit('overlay unresponsive'))
 }
 
-function sendEsc(holding) {
+function sendHold(holding) {
   for (const w of overlays) {
-    if (w && !w.isDestroyed()) w.webContents.send('deepwork:esc', { holding, holdMs: ESC_HOLD_MS })
+    if (w && !w.isDestroyed()) w.webContents.send('deepwork:hold', { holding, holdMs: HOLD_MS })
   }
 }
 
 function forceQuit(reason) {
   log('FORCE QUIT —', reason)
   exiting = true
-  clearEscHold()
+  clearHold()
   stopTicker()
   closeOverlays()
   app.exit(0)
