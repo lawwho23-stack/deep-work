@@ -50,9 +50,9 @@
     letter-spacing: 0.14em;
     color: #1f1f1f;
   }
-  /* Feedback while Escape is held. Cosmetic only — the quit itself is decided in
+  /* Feedback while Space is held. Cosmetic only — the quit itself is decided in
      the main process, so this bar going missing changes nothing. */
-  #escbar {
+  #holdbar {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -66,13 +66,13 @@
 <div id="label">Break</div>
 <div id="clock">00:00</div>
 <div id="sub">Step away from the screen.</div>
-<div id="hint">HOLD ESC 5s — EMERGENCY EXIT</div>
-<div id="escbar"></div>
+<div id="hint">HOLD SPACE 5s — EMERGENCY EXIT</div>
+<div id="holdbar"></div>
 
 <script>
   const clock = document.getElementById('clock')
   const sub = document.getElementById('sub')
-  const escbar = document.getElementById('escbar')
+  const holdbar = document.getElementById('holdbar')
 
   const mmss = (ms) => {
     const t = Math.ceil(ms / 1000)
@@ -85,13 +85,13 @@
     if (remaining <= 10000) sub.textContent = 'Back to work in a moment.'
   })
 
-  window.deepwork.onEsc(({ holding, holdMs }) => {
+  window.deepwork.onHold(({ holding, holdMs }) => {
     if (holding) {
-      escbar.style.transition = 'width ' + holdMs + 'ms linear'
-      escbar.style.width = '100%'
+      holdbar.style.transition = 'width ' + holdMs + 'ms linear'
+      holdbar.style.width = '100%'
     } else {
-      escbar.style.transition = 'width 180ms ease-out'
-      escbar.style.width = '0%'
+      holdbar.style.transition = 'width 180ms ease-out'
+      holdbar.style.width = '0%'
     }
   })
 </script>

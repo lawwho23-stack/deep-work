@@ -59,7 +59,7 @@ screen's page has crashed.
 
 | Exit | What it does |
 |---|---|
-| **Hold `Esc` for 5 seconds** | Quits the whole app. A quick tap does nothing — verified. A thin bar fills along the bottom while you hold, so you can see it working. |
+| **Hold `Space` for 5 seconds** | Quits the whole app. A quick tap does nothing — verified. A thin bar fills along the bottom while you hold, so you can see it working. |
 | **`Cmd` + `Ctrl` + `Option` + `Q`** | Quits immediately. A global shortcut that needs no window at all — the dead-man switch if everything else is broken. |
 | **`Ctrl+C`** in the terminal | Quits immediately, break or no break. Needs you to reach the terminal, which you cannot see during a break — but it works typed blind. |
 
@@ -80,7 +80,7 @@ DEEPWORK_BREAK_MS=600000 deep focus     # 10-minute breaks
 |---|---|
 | `DEEPWORK_WORK_MS` | `5400000` (90 min) |
 | `DEEPWORK_BREAK_MS` | `300000` (5 min) |
-| `DEEPWORK_ESC_HOLD_MS` | `5000` (5 s) |
+| `DEEPWORK_HOLD_MS` | `5000` (5 s) |
 | `DEEPWORK_AUTOSTART` | `1` skips the Start click |
 
 ## Files
@@ -113,8 +113,8 @@ DEEPWORK_AUTOSTART=1 DEEPWORK_WORK_MS=4000 DEEPWORK_BREAK_MS=4000 deep focus
 
 ```bash
 DEEPWORK_VERIFY=shot:/tmp/x.png   # save what the break screen renders
-DEEPWORK_VERIFY=esc-hold          # hold Escape and never release  -> must quit
-DEEPWORK_VERIFY=esc-cancel        # tap Escape and release early   -> must NOT quit
+DEEPWORK_VERIFY=space-hold        # hold Space and never release   -> must quit
+DEEPWORK_VERIFY=space-cancel      # tap Space and release early    -> must NOT quit
 DEEPWORK_VERIFY=crash             # kill the break screen's page   -> watchdog must quit
 ```
 
@@ -130,8 +130,7 @@ Verified:
 - It covers an app running in **native fullscreen on its own Space** — the case a browser page or
   a Tkinter window cannot handle, and the reason this is an Electron app.
 - It covers the full display including the menu bar strip (`1470x956@0,0`).
-- **Hold Escape → quits. Tap Escape → does not.** Six consecutive breaks each survived a brief tap
-  and ran to completion.
+- **Hold Space → quits. Tap Space → does not.** Breaks survived a brief tap and ran to completion.
 - Killing the break screen's renderer makes the watchdog tear everything down and quit.
 - **`Ctrl+C` quits from a real terminal in both phases**, mid-break included, leaving zero processes
   behind. Tested through a pty, so the signal took the same path a keypress does.
@@ -142,10 +141,19 @@ Verified:
 
 Not verified, and why:
 
-- **A physically held Escape key and the real `Cmd+Ctrl+Opt+Q` chord.** macOS blocks scripted
+- **A physically held Space key and the real `Cmd+Ctrl+Opt+Q` chord.** macOS blocks scripted
   keystrokes without Accessibility permission, so both were driven through the real handlers with a
   synthetic key source instead. Everything downstream of the keypress is proven; press them once by
   hand to confirm the last inch.
 - **Multi-display.** Only one display was attached. The code makes one window per display, but that
   path has not run against two.
 - **A real `pmset` sleep**, as opposed to the freeze that stands in for it.
+
+Known, and deliberate:
+
+- **A spacebar held for 5 seconds ends the break, whoever is holding it.** The break screen covers
+  the display but does **not** lock the keyboard, so anything you press during a break still reaches
+  the app blind. Measured: in one 12-second break with no test running and nobody trying to quit,
+  the app received **57 spacebar key-downs and 2 key-ups** — a real hold of about 5.5 seconds — and
+  quit. Space was chosen anyway because it is the one key you can find without seeing the screen.
+  If that trade stops being worth it, raise `DEEPWORK_HOLD_MS`.
