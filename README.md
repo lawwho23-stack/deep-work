@@ -6,20 +6,56 @@ over. Then the next 90-minute block starts on its own.
 
 No database, no accounts, no network, no settings file. It remembers nothing between runs.
 
+**macOS only.** The enforced break screen is built on macOS window levels and the macOS app menu;
+there is no equivalent elsewhere, so `deep focus` refuses to start on other systems rather than
+half-working.
+
+## Install
+
+```bash
+git clone https://github.com/lawwho23-stack/deep-work.git
+cd deep-work
+npm install    # downloads Electron — a few hundred MB, once
+npm link       # puts `deep` on your PATH
+```
+
+That is the whole install. `deep focus` now works from any directory, in any terminal.
+
+**What `npm install` does here.** Electron 44 no longer downloads its own binary on install, so
+this project runs `install-electron` as a `postinstall` step to fetch it. That is the few-hundred-MB
+download, and it is the only thing this project ever pulls from the network. Without it you would
+get a working `deep` command and no app behind it.
+
+**What `npm link` does.** It symlinks your global npm folder to this clone — **nothing is copied**.
+The app runs from wherever you cloned it, under whatever name you cloned it as, and you can move or
+rename the folder afterwards and it keeps working: `bin/deep` resolves its own real location, both
+through the symlinked command and through the symlinked directory npm creates.
+
+If `npm link` says `File exists: .../bin/deep`, you already have something called `deep` on your
+PATH. Remove that file first, then link again.
+
+If you install with `npm install --ignore-scripts` — a reasonable habit, and the reason Electron
+dropped its own postinstall — that `postinstall` is skipped and you get **no Electron binary**.
+Verified: `deep focus` then reports Electron is not installed. Recover with `npx install-electron`
+in this folder.
+
+Prefer not to touch your PATH? Skip `npm link` and run `./bin/deep focus` from inside the folder.
+(`npx deep focus` does **not** work — npx would go looking for an unrelated package named `deep` on
+the npm registry.)
+
+**To remove it:** `npm uninstall -g deep-work`, then delete the folder. Nothing is left behind —
+the app writes no config, no cache and no data anywhere.
+
+After pulling new changes, run `npm install` again — a dependency may have moved, and it re-checks
+the Electron binary.
+
 ## Run it
 
 ```bash
 deep focus
 ```
 
-From any directory, any terminal. Press **Start**, then minimise the window and work — the break
-arrives by itself.
-
-`deep` is a small script in `bin/deep`, linked into `~/.local/bin` (already on your PATH). It works
-out this folder's location by following its own symlink back to the real script, so you can move
-`deep-work/` anywhere and `deep focus` keeps working — there is nothing to edit.
-
-First time only, or after pulling changes: `cd deep-work && npm install`.
+Press **Start**, then minimise the window and work — the break arrives by itself.
 
 ## Stopping it
 
